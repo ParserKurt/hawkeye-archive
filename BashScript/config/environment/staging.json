@@ -1,0 +1,18 @@
+{
+	"host": "hawkeye-purging.clxybluj7kyg.ap-southeast-1.rds.amazonaws.com",
+	"database": "hawkeye",
+	"table": "autdit_log",
+	"user": "hetest",
+	"password": "OGYyZTk5NjJkOGM",
+	"destHost": "hawkeye-test.clxybluj7kyg.ap-southeast-1.rds.amazonaws.com",
+	"destDatabase": "hawkeye_staging",
+	"destUser":"hawkeye",
+	"destPassword":"dc0EVoRYheU0",
+	"slave_lag":100,
+	"file": "/var/log/archiver/",
+	"days_archive": 180,
+	"days_purge": 90,
+	"condition_archive": "timestamp < NOW() - INTERVAL  DAY",
+	"condition_purge": "timestamp < NOW() - INTERVAL  DAY"
+}
+

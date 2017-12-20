@@ -1,0 +1,12 @@
+{
+	"host": "127.0.0.1",
+	"database": "hawkeye",
+	"table": "autdit_log",
+	"user": "root",
+	"password": "root",
+	"file": "/var/log/archiver/",
+	"days_archive": 30,
+	"days_purge": 20,
+	"condition_archive": "timestamp < NOW() - INTERVAL  DAY",
+	"condition_purge": "timestamp < NOW() - INTERVAL  DAY"
+}
