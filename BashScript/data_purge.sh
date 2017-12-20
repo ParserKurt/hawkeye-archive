@@ -18,56 +18,27 @@ if [ $# -eq 0 ]
 fi
 
 
-host=($(jq -r '.host' $env))
-database=($(jq -r '.database' $env))
-table=($(jq -r '.table' $env))
-user=($(jq -r '.user' $env))
-password=($(jq -r '.password' $env))
-file=($(jq -r '.file' $env))
-condition=($(jq -r '.condition' $env))
+destHost=($(jq -r '.destHost' ${env}))
+destDatabase=($(jq -r '.destDatabase' ${env}))
+destUser=($(jq -r '.destUser' ${env}))
+destPassword=($(jq -r '.destPassword' ${env}))
+condition_purge=($(jq -r '.condition_purge' ${env}))
+days_purge=($(jq -r '.days_purge' ${env}))
+slave_lag=($(jq -r '.slave_lag' ${env}))
 
 
-if [ $# -eq 2 ]
-then
-    if [ $2 = "all" ]
-    then
-        getArray "config/tables.txt"
-        for t in "${array[@]}"
-        do
-            eval sudo pt-archiver --source h=$host,D=$database,t=$t,p=$password,u=$user --file "'$file`date +%Y-%m-%d`_$t '" --where "'$condition'" --limit 1 --txn-size 1 --no-check-charset --header --no-delete --statistics
-        done
-        exit 1
-    fi
-    else
-
-        echo -e "please enter table name"
-        read -a table
-
-        echo -e "please enter where condition"
-        read -a where
-
-        echo -e "Do you want to purge the data [Y/N]"
-        read -a purge
-
-        echo -e "Do you want to save data to database? [Y/N]"
-        read -a savedb
-
-        if [ ${savedb[0]} = "Y" ]
-        then
-            echo -e "Please enter db destination [h=hostname,D=databasename]"
-            read -a destination
-        fi
-
-
-        if [ ${purge[0]} = "N" ]
-        then
-            purge="--no-delete"
-        else
-            purge=""
-        fi
-
-
-        echo 'sudo pt-archiver --source h=$host,D=$database,t=${table[0]},p=$password,u=$user --dest ${destination[0]} --file "'$file`date +%Y-%m-%d`_${table[0]} '" --where "'${where[0]}'" --limit 1 --txn-size 1 --no-check-charset --header ${purge[0]} --statistics'
-        eval sudo pt-archiver --source h=$host,D=$database,t=${table[0]},p=$password,u=$user --dest ${destination[0]} --file "'$file`date +%Y-%m-%d`_${table[0]} '" --where "'${where[0]}'" --limit 1 --txn-size 1 --no-check-charset --header $purge --statistics
-fi
-exit 1
+ echo "executing data purging........"
+            getArray "config/tables.txt"
+            for t in "${array[@]}"
+                do
+            #         if [ $t = "api_user" ]
+            #            then
+            #                condition_purge="date_created < NOW() - INTERVAL 180 DAY"
+            #            else
+            #                condition_purge="timestamp < NOW() - INTERVAL 180 DAY"
+            #         fi
+                     condition_purge="timestamp < NOW() - INTERVAL $days_purge DAY"
+                     echo "purging $t"
+                     eval pt-archiver --source h=${destHost},D=${destDatabase},t=${t},p=${destPassword},u=${destUser} --where "'${condition_purge}'" --purge --limit 10000 --commit-each --primary-key-only --no-check-charset --header --statistics --why-quit --retries 5 --optimize=s
+                done
+echo "done purging"
