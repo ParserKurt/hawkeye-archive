@@ -4,8 +4,22 @@
   "description": "",
   "main": "main.js",
   "dependencies": {
+    "@types/mocha": "^2.2.44",
+    "assert": "^1.4.1",
+    "bluebird": "^3.5.1",
     "express": "^4.15.4",
-    "mongodb": "^2.2.31"
+    "fs-extra": "^5.0.0",
+    "lodash": "^4.17.4",
+    "logger": "pterwin/logger",
+    "mocha": "^4.0.1",
+    "moment": "^2.20.0",
+    "moment-timezone": "^0.5.14",
+    "mongodb": "^2.2.31",
+    "path": "^0.12.7",
+    "ts-node": "^4.0.2",
+    "typescript": "^2.6.2",
+    "winston": "^2.4.0",
+    "winston-color": "^1.0.0"
   },
   "devDependencies": {},
   "scripts": {
