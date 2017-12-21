@@ -15,6 +15,7 @@
     "moment": "^2.20.0",
     "moment-timezone": "^0.5.14",
     "mongodb": "^2.2.31",
+    "mongoose": "^4.13.7",
     "path": "^0.12.7",
     "ts-node": "^4.0.2",
     "typescript": "^2.6.2",

@@ -17,9 +17,9 @@ let config = {
                     }
                 },
                 destination_db : {
-                    host : '127.0.0.1',
+                    host : 'staging-ui.sendtextnow.com',
                     port : '27017',
-                    database : 'aprm-test-archive'
+                    database : 'he-staging-archive'
                 }
             },
             // local : {
