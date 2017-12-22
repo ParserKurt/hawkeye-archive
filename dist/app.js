@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 // make sure to install the following first: sudo apt install mongodb-clients
+let config = require("./config/config");
 const winston = require("winston");
 let logger = new (winston.Logger)({
     transports: [
@@ -8,7 +9,9 @@ let logger = new (winston.Logger)({
     ]
 });
 let MongoArchiver = require("./lib/mongo_archiver");
-let ha = new MongoArchiver();
+let ha = new MongoArchiver({
+    config: config
+});
 logger.info("starting app for mongo archiving and purging");
 ha.start()
     .then(() => {

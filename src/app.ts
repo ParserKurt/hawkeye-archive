@@ -1,6 +1,7 @@
 "use strict";
 
 // make sure to install the following first: sudo apt install mongodb-clients
+let config = require("./config/config");
 import * as winston from "winston";
 let logger = new (winston.Logger)({
     transports: [
@@ -10,8 +11,10 @@ let logger = new (winston.Logger)({
 
 let MongoArchiver = require("./lib/mongo_archiver");
 
+let ha = new MongoArchiver({
+    config : config
+});
 
-let ha = new MongoArchiver();
 logger.info("starting app for mongo archiving and purging");
 ha.start()
     .then(() => {

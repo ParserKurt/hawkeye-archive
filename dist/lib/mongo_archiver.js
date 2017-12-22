@@ -1,7 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-// import * as config from "./config/config";
-let config = require("../config/config");
 const _ = require("lodash");
 const Promise = require("bluebird");
 const child_process_1 = require("child_process");
@@ -14,13 +12,16 @@ let logger = new (winston.Logger)({
     ]
 });
 class MongoArchiver {
-    constructor() {
-        this.dir = config.dir.output;
-        this.db_obj = config.db.mongo;
-        this.today = new Date();
-        this.t = moment(this.today).tz('Asia/Manila').format('HHmmss');
+    constructor(params) {
+        this.config = params.config;
+        // logger.info('construct', this.config);
+        // process.exit(1);
+        this.dir = this.config.dir.output;
+        this.db_obj = this.config.db.mongo;
+        this.today = params.d || new Date();
+        this.t = params.t || moment(this.today).tz('Asia/Manila').format('HHmmss');
         this.dir_date = moment(this.today).tz('Asia/Manila').format('YYYY-MM-DD');
-        this.today.setMonth(this.today.getMonth() - config.options.livedb.archive);
+        this.today.setMonth(this.today.getMonth() - (this.config.options.livedb.archive || 3));
         this.from = this.today.getTime();
     }
     conn(params, purge) {
@@ -119,6 +120,7 @@ class MongoArchiver {
                     "-c " + params.collection + " " +
                     "--query '" + jsonString + "' " +
                     "-o " + d;
+                logger.info(command);
                 child_process_1.exec(command, (error) => {
                     if (error) {
                         logger.info("cannot perform mongodump: ", error.message);
