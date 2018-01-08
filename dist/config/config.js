@@ -9,7 +9,7 @@ let config = {
                 port: '27017',
                 database: 'aprm-test',
                 collections: {
-                    transaction: {
+                    transactions: {
                         name: 'transactions',
                         filter_field: 'createdAt'
                     },
@@ -19,9 +19,29 @@ let config = {
                     }
                 },
                 destination_db: {
-                    host: '127.0.0.1',
+                    host: 'staging-ui.sendtextnow.com',
                     port: '27017',
-                    database: 'aprm-test-archive'
+                    database: 'he-staging-archive'
+                }
+            },
+            staging_b: {
+                host: 'staging-ui.sendtextnow.com',
+                port: '27017',
+                database: 'aprm-test',
+                collections: {
+                    transactions: {
+                        name: 'transactions',
+                        filter_field: 'createdAt'
+                    },
+                    files: {
+                        name: 'files',
+                        filter_field: 'createdAt'
+                    }
+                },
+                destination_db: {
+                    host: 'staging-ui.sendtextnow.com',
+                    port: '27017',
+                    database: 'he-staging-archive'
                 }
             },
         }
@@ -31,11 +51,11 @@ let config = {
     },
     options: {
         livedb: {
-            archive: 0,
-            purge: 3
+            archive: 90,
+            purge: 90
         },
         archivedb: {
-            purge: 6
+            purge: 180
         }
     }
     // mongo : {

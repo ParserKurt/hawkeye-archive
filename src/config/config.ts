@@ -7,7 +7,7 @@ let config = {
                 port : '27017',
                 database : 'aprm-test',
                 collections : {
-                    transaction : {
+                    transactions : {
                         name : 'transactions',
                         filter_field : 'createdAt'
                     },
@@ -17,36 +17,43 @@ let config = {
                     }
                 },
                 destination_db : {
-                    host : '127.0.0.1',
+                    host : 'staging-ui.sendtextnow.com',
                     port : '27017',
-                    database : 'aprm-test-archive'
+                    database : 'he-staging-archive'
                 }
             },
-            // local : {
-            //     host : '127.0.0.1',
-            //     port : '27017',
-            //     database : 'he-staging',
-            //     collections : [
-            //         'cdrs'
-            //     ],
-            //     destination_db : {
-            //         host : '127.0.0.1',
-            //         port : '27017',
-            //         database : 'aprm-test-archive'
-            //     }
-            // }
+            staging_b : {
+                host : 'staging-ui.sendtextnow.com',
+                port : '27017',
+                database : 'aprm-test',
+                collections : {
+                    transactions : {
+                        name : 'transactions',
+                        filter_field : 'createdAt'
+                    },
+                    files : {
+                        name : 'files',
+                        filter_field : 'createdAt'
+                    }
+                },
+                destination_db : {
+                    host : 'staging-ui.sendtextnow.com',
+                    port : '27017',
+                    database : 'he-staging-archive'
+                }
+            },
         }
     },
     dir : {
         output : path.join(__dirname + "/../mongodump")
     },
     options : {
-        livedb : {  // in months
-            archive : 0,
-            purge : 3
+        livedb : {  // 3 months or 90 days
+            archive : 90,
+            purge : 90
         },
-        archivedb : {   // in months
-            purge : 6
+        archivedb : {   // 6 months or 180 days
+            purge : 180
         }
     }
 
