@@ -7,7 +7,7 @@ let config = {
                 port : '27017',
                 database : 'aprm-test',
                 collections : {
-                    transaction : {
+                    transactions : {
                         name : 'transactions',
                         filter_field : 'createdAt'
                     },

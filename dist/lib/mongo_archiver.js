@@ -1,10 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+// import * as config from "./config/config";
+// let config = require("../config/config");
+const shelljs = require("shelljs");
 const _ = require("lodash");
 const Promise = require("bluebird");
 const child_process_1 = require("child_process");
 const moment = require("moment-timezone");
 const fs = require("fs-extra");
+Promise.promisifyAll(shelljs);
 const winston = require("winston");
 let logger = new (winston.Logger)({
     transports: [
@@ -111,8 +115,7 @@ class MongoArchiver {
         return new Promise((resolve, reject) => {
             // check directory first
             let d = this.dir + "/" + params.dir_date + "/" + params.archive_time;
-            return fs.ensureDir(d)
-                .then(() => {
+            fs.ensureDir(d).then(() => {
                 let jsonString = '{ "' + params.collection_filter + '" : { $lte : new Date(' + params.from + ') } }';
                 let command = "mongodump -h " + params.host + " " +
                     "--port " + params.port + " " +
@@ -121,54 +124,75 @@ class MongoArchiver {
                     "--query '" + jsonString + "' " +
                     "-o " + d;
                 logger.info(command);
-                child_process_1.exec(command, (error) => {
+                child_process_1.exec(command, (error, stdout, stderr) => {
                     if (error) {
-                        logger.info("cannot perform mongodump: ", error.message);
-                        resolve(false);
+                        throw new Error(`exec error: ${error}`);
                     }
-                    else {
-                        logger.info("dump for " + params.collection + " successful");
-                        resolve(params);
-                    }
-                }).stdout.on('data', (data) => {
-                    logger.info(data);
+                    logger.info("mongodump successful : db=", params.database, "; collection:", params.collection);
+                    return params;
                 });
+            }).then((res) => {
+                if (res === void 0 && res !== false) {
+                    resolve(params);
+                }
+                else {
+                    throw new Error("mongodump result is : " + res);
+                }
             }).catch((err) => {
                 logger.error("cannot perform mongodump: ", err.message);
-                resolve(false);
+                return Promise.resolve(false);
             });
         });
     }
     restore(params) {
         return new Promise((resolve, reject) => {
             // check directory first
-            let d = this.dir + "/" + this.dir_date + "/" + this.t + "/" + params.database;
-            return fs.ensureDir(d)
-                .then(() => {
-                this.conn({
+            let d = params.dump_file || this.dir + "/" + this.dir_date + "/" + this.t + "/" + params.database;
+            fs.ensureDir(d).then(() => {
+                return this.conn({
                     host: params.destination_db.host,
                     port: params.destination_db.port,
                     database: params.destination_db.database
-                }, false).then((res) => {
-                    if (!res) {
-                        resolve(false);
+                }, false);
+            }).then((res) => {
+                if (!res) {
+                    throw new Error("cannot find directory " + d);
+                }
+                let command = "mongorestore -h " + params.destination_db.host + " " +
+                    "--port " + params.destination_db.port + " " +
+                    "-d " + params.destination_db.database + " " + d;
+                // "-d " + params.destination_db.database + " src/tests/sample_dump/";
+                logger.info(command);
+                // using spawn
+                // let com : any = child_proc.spawn("mongorestore", ['--host',''+params.destination_db.host+'', '--port', ''+params.destination_db.port+'', '--db',''+params.destination_db.database+'',''+d+'']);
+                // com.stdout.on('data', (data) => {
+                //     logger.info(`stdout: ${data}`);
+                // });
+                //
+                // com.stderr.on('data', (data) => {
+                //     logger.info(`stderr: ${data}`);
+                // });
+                // com.on('exit', (code) => {
+                //     logger.info(`>>> child process exited with code ${code}`);
+                //     return true;
+                // });
+                //
+                // return false;
+                child_process_1.exec(command, (error, stdout, stderr) => {
+                    if (error) {
+                        logger.info(`exec error: ${error}`);
+                        throw new Error("cannot execute");
                     }
-                    let command = "mongorestore -h " + params.destination_db.host + " " +
-                        "--port " + params.destination_db.port + " " +
-                        "-d " + params.destination_db.database + " " + d;
-                    child_process_1.exec(command, (error) => {
-                        if (error) {
-                            logger.info("cannot perform mongorestore: ", error.message);
-                            resolve(false);
-                        }
-                        else {
-                            logger.info("mongorestore for " + params.database + " successful", "restored to " + params.destination_db.database);
-                            resolve(true);
-                        }
-                    }).stdout.on('data', (data) => {
-                        logger.info(data);
-                    });
+                    logger.info("mongorestore for " + params.database + " successful", "restored to " + params.destination_db.database);
+                    return true;
                 });
+            }).then((res) => {
+                if (res === void 0 && res !== false) {
+                    resolve(params);
+                }
+                else {
+                    throw new Error("mongorestor result is : " + res);
+                }
             }).catch((err) => {
                 logger.error("cannot perform mongorestore: ", err.message);
                 resolve(false);

@@ -103,27 +103,32 @@ describe("mongodb archiving and purging tool", () => {
         // for restore purposes
         dbobj.destination_db = config.db.mongo.staging.destination_db;
 
-        mongoarchiver.archive(dbobj)
-            .then((res) => {
-                expect(res).to.not.equal(false);
+        // let archiver = mongoarchiver.archive(dbobj);
+        // return archiver;
 
-                let path : string = config.dir.output + "/" + dir_date + "/" + t + "/" + config.db.mongo.staging.database + "/";
+        mongoarchiver.archive(dbobj).then(done());
 
-                fs.readdir(path, (err,  files) => {
-                    logger.info(files);
-                    expect(files.length).to.not.equal(0);
-
-                    done();
-                });
-            });
+        // return mongoarchiver.archive(dbobj)
+        //     .then((res) => {
+        //         expect(res).to.not.equal(false);
+        //         logger.info("res here...", res);
+        //         return res;
+        //     }).then((res) => {
+        //         // check if dump files were created
+        //         let path : string = config.dir.output + "/" + dir_date + "/" + t + "/" + config.db.mongo.staging.database + "/";
+        //         fs.readdir(path, (err,  files) => {
+        //             expect(files.length).to.not.equal(0);
+        //             // done();
+        //         });
+        //     });
     });
 
-    it("it should be able to restore the mongodump file", (done) => {
+    it("it should be able to restore the mongodump file", () => {
+
+        let path : string = __dirname + "/sample_dump/";
 
         let mongoarchiver : any = new MongoArchiver({
-            config : config,
-            d : new Date("2017-12-22"),
-            t : "145907"
+            config : config
         });
 
         let dbobj : any = {};
@@ -133,27 +138,29 @@ describe("mongodb archiving and purging tool", () => {
             database : "he-staging-archive"
         };
         dbobj.database = "aprm-test";
-        let restore = mongoarchiver.restore(dbobj);
-        expect(restore).to.not.equal(false);
-        done();
+        dbobj.dump_file = path;
+
+        return mongoarchiver.restore(dbobj);
     });
 
-    it("it should be able to purge data from mongodb", (done) => {
+    it("it should be able to purge data from mongodb", () => {
         let mongoarchiver : any = new MongoArchiver({
+            config : config
+        });
+
+        let dbobj : any = {};
+        dbobj.destination_db = {
             host : "staging-ui.sendtextnow.com",
             port : "27017",
-            database : "he-staging-archive",
-            collections : {
-                transaction : {
-                    name : 'transactions',
-                    filter_field : 'createdAt'
-                },
-                files : {
-                    name : 'files',
-                    filter_field : 'createdAt'
-                }
-            }
-        });
-        done();
+            database : "he-staging-archive"
+        };
+        dbobj.collections = {
+            transactions : {
+                name : 'transactions',
+                filter_field : 'createdAt'
+            },
+        };
+
+        return mongoarchiver.pre_purge(dbobj);
     });
 });
