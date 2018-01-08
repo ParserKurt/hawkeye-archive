@@ -25,24 +25,37 @@ class MongoArchiver{
     config : any;
     db_obj : any;
     dir : string;
-    today : any;
+    base_date : any;
+    archiving_date_prod : any;
+    purge_date_prod : any;
+    purge_date_archive : any;
     t : any;
     dir_date : any;
     from : any;
 
     constructor(params){
         this.config = params.config;
-
-        // logger.info('construct', this.config);
-        // process.exit(1);
-
         this.dir = this.config.dir.output;
         this.db_obj = this.config.db.mongo;
-        this.today = params.d || new Date();
-        this.t = params.t || moment(this.today).tz('Asia/Manila').format('HHmmss');
-        this.dir_date = moment(this.today).tz('Asia/Manila').format('YYYY-MM-DD');
-        this.today.setMonth(this.today.getMonth() - (this.config.options.livedb.archive || 3));
-        this.from = this.today.getTime();
+
+        this.base_date = params.d || new Date();
+
+        // set archiving date for prod
+        this.archiving_date_prod = new Date();
+        this.archiving_date_prod.setDate(this.base_date.getDate() - (this.config.options.livedb.archive || 90));
+
+        // set purge date for prod
+        this.purge_date_prod = new Date();
+        this.purge_date_prod.setDate(this.base_date.getDate() - (this.config.options.livedb.purge || 90));
+
+        // set purge dates
+        this.purge_date_archive = new Date();
+        this.purge_date_archive.setDate(this.base_date.getDate() - (this.config.options.archivedb.purge || 180));
+
+        this.t = params.t || moment(this.archiving_date_prod).tz('Asia/Manila').format('HHmmss');
+        this.dir_date = moment(this.archiving_date_prod).tz('Asia/Manila').format('YYYY-MM-DD');
+
+        this.from = this.archiving_date_prod.getTime();
     }
 
     conn(params, purge) : any{
@@ -251,6 +264,11 @@ class MongoArchiver{
     }
 
     pre_purge(params) : any {
+
+        /*
+         * @todo: modify code to purge on test db
+         */
+
         return new  Promise((resolve, reject) => {
             this.conn({
                 host : params.destination_db.host,
@@ -260,26 +278,62 @@ class MongoArchiver{
                 .then((db) => {
                     let tasks : any = [];
                     _.forEach(params.collections, (collection) => {
-                        tasks.push(this.purge({db : db, collection : collection.name}));
+                        tasks.push(this.purge({type : "archive", db : db, collection : collection.name, filter_field : collection.filter_field}));
                     });
 
                     Promise.map(tasks, (task) => {
                         return task;
                     }, {concurrency : 1})
-                    .then(() => {
-                        db.close();
-                        resolve(true);
-                    }).catch((err) => {
+                        .then(() => {
+                            db.close();
+                            resolve(true);
+                        }).catch((err) => {
                         logger.error(err.message);
                         resolve(false);
                     });
                 });
         });
+
+        // return new  Promise((resolve, reject) => {
+        //     this.conn({
+        //         host : params.destination_db.host,
+        //         port : params.destination_db.port,
+        //         database : params.destination_db.database
+        //     }, true)
+        //         .then((db) => {
+        //             let tasks : any = [];
+        //             _.forEach(params.collections, (collection) => {
+        //                 tasks.push(this.purge({db : db, collection : collection.name}));
+        //             });
+        //
+        //             Promise.map(tasks, (task) => {
+        //                 return task;
+        //             }, {concurrency : 1})
+        //             .then(() => {
+        //                 db.close();
+        //                 resolve(true);
+        //             }).catch((err) => {
+        //                 logger.error(err.message);
+        //                 resolve(false);
+        //             });
+        //         });
+        // });
     }
 
     purge(params) : any {
         return new Promise((resolve, reject) => {
-            params.db.collection(params.collection).deleteMany({ }, (err, obj) => {
+            let to_be_deleted : any = (params.type === "archive") ? this.purge_date_archive : this.purge_date_prod;
+
+            // let filter : any = "'" + params.filter_field + "' : { $lte : new Date('" + to_be_deleted + "') }";
+
+            let filter : any = {};
+            filter[params.filter_field] = {
+                '$lte' : to_be_deleted
+            };
+
+            logger.info(filter);
+
+            params.db.collection(params.collection).deleteMany(filter, (err, obj) => {
                 if(err) {
                     logger.error(params.collection, "collection cannot be purged", err.message);
                     resolve(false);

@@ -57,11 +57,11 @@ let config = {
     },
     options : {
         livedb : {  // in months
-            archive : 0,
-            purge : 3
+            archive : 90,
+            purge : 90
         },
         archivedb : {   // in months
-            purge : 6
+            purge : 180
         }
     }
 };

@@ -42,11 +42,11 @@ let config = {
     },
     options: {
         livedb: {
-            archive: 0,
-            purge: 3
+            archive: 90,
+            purge: 90
         },
         archivedb: {
-            purge: 6
+            purge: 180
         }
     }
 };

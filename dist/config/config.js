@@ -24,6 +24,26 @@ let config = {
                     database: 'he-staging-archive'
                 }
             },
+            staging_b: {
+                host: 'staging-ui.sendtextnow.com',
+                port: '27017',
+                database: 'aprm-test',
+                collections: {
+                    transactions: {
+                        name: 'transactions',
+                        filter_field: 'createdAt'
+                    },
+                    files: {
+                        name: 'files',
+                        filter_field: 'createdAt'
+                    }
+                },
+                destination_db: {
+                    host: 'staging-ui.sendtextnow.com',
+                    port: '27017',
+                    database: 'he-staging-archive'
+                }
+            },
         }
     },
     dir: {
@@ -31,11 +51,11 @@ let config = {
     },
     options: {
         livedb: {
-            archive: 0,
-            purge: 3
+            archive: 90,
+            purge: 90
         },
         archivedb: {
-            purge: 6
+            purge: 180
         }
     }
     // mongo : {
