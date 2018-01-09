@@ -206,32 +206,65 @@ class MongoArchiver {
         });
     }
     pre_purge(params) {
-        /*
-         * @todo: modify code to purge on test db
-         */
+        let tasks = [];
         return new Promise((resolve, reject) => {
             this.conn({
-                host: params.destination_db.host,
-                port: params.destination_db.port,
-                database: params.destination_db.database
-            }, true)
-                .then((db) => {
-                let tasks = [];
+                host: params.host,
+                port: params.port,
+                database: params.database
+            }, true).then((db) => {
                 _.forEach(params.collections, (collection) => {
-                    tasks.push(this.purge({ type: "archive", db: db, collection: collection.name, filter_field: collection.filter_field }));
+                    tasks.push(this.purge({ type: "prod", db: db, collection: collection.name, filter_field: collection.filter_field }));
                 });
-                Promise.map(tasks, (task) => {
-                    return task;
-                }, { concurrency: 1 })
-                    .then(() => {
-                    db.close();
-                    resolve(true);
-                }).catch((err) => {
-                    logger.error(err.message);
-                    resolve(false);
+                return tasks;
+            }).then((tasks) => {
+                this.conn({
+                    host: params.destination_db.host,
+                    port: params.destination_db.port,
+                    database: params.destination_db.database
+                }, true).then((db) => {
+                    _.forEach(params.collections, (collection) => {
+                        tasks.push(this.purge({ type: "archive", db: db, collection: collection.name, filter_field: collection.filter_field }));
+                    });
+                    return tasks;
+                }).then((tasks) => {
+                    Promise.map(tasks, (task) => {
+                        return task;
+                    }, { concurrency: 1 })
+                        .then(() => {
+                        // db.close();
+                        resolve(true);
+                    }).catch((err) => {
+                        logger.error(err.message);
+                        resolve(false);
+                    });
                 });
             });
         });
+        // return new  Promise((resolve, reject) => {
+        //     this.conn({
+        //         host : params.destination_db.host,
+        //         port : params.destination_db.port,
+        //         database : params.destination_db.database
+        //     }, true)
+        //         .then((db) => {
+        //             let tasks : any = [];
+        //             _.forEach(params.collections, (collection) => {
+        //                 tasks.push(this.purge({type : "archive", db : db, collection : collection.name, filter_field : collection.filter_field}));
+        //             });
+        //
+        //             Promise.map(tasks, (task) => {
+        //                 return task;
+        //             }, {concurrency : 1})
+        //                 .then(() => {
+        //                     db.close();
+        //                     resolve(true);
+        //                 }).catch((err) => {
+        //                 logger.error(err.message);
+        //                 resolve(false);
+        //             });
+        //         });
+        // });
         // return new  Promise((resolve, reject) => {
         //     this.conn({
         //         host : params.destination_db.host,
@@ -269,10 +302,12 @@ class MongoArchiver {
             params.db.collection(params.collection).deleteMany(filter, (err, obj) => {
                 if (err) {
                     logger.error(params.collection, "collection cannot be purged", err.message);
+                    params.db.close();
                     resolve(false);
                 }
                 else {
                     logger.info(params.collection, "collection purge successful");
+                    params.db.close();
                     resolve(true);
                 }
             });

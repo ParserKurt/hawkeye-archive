@@ -43,10 +43,10 @@ let config = {
     options: {
         livedb: {
             archive: 90,
-            purge: 90
+            purge: 1
         },
         archivedb: {
-            purge: 180
+            purge: 1
         }
     }
 };
@@ -116,17 +116,25 @@ describe("mongodb archiving and purging tool", () => {
         let mongoarchiver = new MongoArchiver({
             config: config
         });
-        let dbobj = {};
-        dbobj.destination_db = {
-            host: "staging-ui.sendtextnow.com",
-            port: "27017",
-            database: "he-staging-archive"
-        };
-        dbobj.collections = {
-            transactions: {
-                name: 'transactions',
-                filter_field: 'createdAt'
+        let dbobj = {
+            host: 'staging-ui.sendtextnow.com',
+            port: '27017',
+            database: 'newdb',
+            collections: {
+                transactions: {
+                    name: 'transactions',
+                    filter_field: 'createdAt'
+                },
+                files: {
+                    name: 'files',
+                    filter_field: 'createdAt'
+                }
             },
+            destination_db: {
+                host: 'staging-ui.sendtextnow.com',
+                port: '27017',
+                database: 'he-staging-archive'
+            }
         };
         return mongoarchiver.pre_purge(dbobj);
     });
