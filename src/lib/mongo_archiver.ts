@@ -89,7 +89,6 @@ class MongoArchiver{
 
             let tasks : any = [];
 
-
             _.forEach(Object.keys(this.db_obj).map(key => this.db_obj[key]), function(db) {
                 tasks.push(mongoarchiver.conn(db, false));
             });
@@ -98,10 +97,9 @@ class MongoArchiver{
                 if(res){
                     return mongoarchiver.pre_process(res);
                 }
-            }, {concurrency : 1})
-                .then(() => {
-                    resolve(true);
-                }).catch((err) => {
+            }, {concurrency : 1}).then(() => {
+                resolve(true);
+            }).catch((err) => {
                 logger.error(err.message);
                 resolve(false);
             });
@@ -138,37 +136,29 @@ class MongoArchiver{
             logger.info("preparing to dump [" + collections_str.substr(1, collections_str.length) + "]");
 
             Promise.map(tasks, (task) => {
-
                 return task;
-            }, {concurrency : 1})
-                .then((res) => {
-
-                    logger.info("starting restore");
-                    return this.restore(params);
-                    // resolve(true);
-
-                }).then(() => {
-                    logger.info("purging...");
-                    return this.pre_purge(params);
-
-                }).then(() => {
-                    resolve(true);
-                }).catch((err) => {
-                    logger.error(err.message);
-                    resolve(false);
-                });
+            }, {concurrency : 1}).then((res) => {
+                logger.info("starting restore");
+                return this.restore(params);
+            }).then(() => {
+                logger.info("purging...");
+                return this.pre_purge(params);
+            }).then(() => {
+                resolve(true);
+            }).catch((err) => {
+                logger.error(err.message);
+                resolve(false);
+            });
         });
     }
 
     archive(params) : any {
-        // let mongoarchiver = this;
         return new Promise((resolve, reject) => {
+
             // check directory first
             let d : string = this.dir + "/" + params.dir_date + "/" + params.archive_time;
             fs.ensureDir(d).then(() => {
-
                 let jsonString : string = '{ "' + params.collection_filter + '" : { $lte : new Date(' + params.from + ') } }';
-
                 let command : string = "mongodump -h " + params.host + " " +
                     "--port " + params.port + " " +
                     "-d " + params.database + " " +
@@ -201,7 +191,6 @@ class MongoArchiver{
 
     restore(params) : any {
         return new Promise((resolve, reject) => {
-
             // check directory first
             let d : string = params.dump_file || this.dir + "/" + this.dir_date + "/" + this.t + "/" + params.database;
 
@@ -299,56 +288,6 @@ class MongoArchiver{
                 });
             });
         });
-
-        // return new  Promise((resolve, reject) => {
-        //     this.conn({
-        //         host : params.destination_db.host,
-        //         port : params.destination_db.port,
-        //         database : params.destination_db.database
-        //     }, true)
-        //         .then((db) => {
-        //             let tasks : any = [];
-        //             _.forEach(params.collections, (collection) => {
-        //                 tasks.push(this.purge({type : "archive", db : db, collection : collection.name, filter_field : collection.filter_field}));
-        //             });
-        //
-        //             Promise.map(tasks, (task) => {
-        //                 return task;
-        //             }, {concurrency : 1})
-        //                 .then(() => {
-        //                     db.close();
-        //                     resolve(true);
-        //                 }).catch((err) => {
-        //                 logger.error(err.message);
-        //                 resolve(false);
-        //             });
-        //         });
-        // });
-
-        // return new  Promise((resolve, reject) => {
-        //     this.conn({
-        //         host : params.destination_db.host,
-        //         port : params.destination_db.port,
-        //         database : params.destination_db.database
-        //     }, true)
-        //         .then((db) => {
-        //             let tasks : any = [];
-        //             _.forEach(params.collections, (collection) => {
-        //                 tasks.push(this.purge({db : db, collection : collection.name}));
-        //             });
-        //
-        //             Promise.map(tasks, (task) => {
-        //                 return task;
-        //             }, {concurrency : 1})
-        //             .then(() => {
-        //                 db.close();
-        //                 resolve(true);
-        //             }).catch((err) => {
-        //                 logger.error(err.message);
-        //                 resolve(false);
-        //             });
-        //         });
-        // });
     }
 
     purge(params) : any {
