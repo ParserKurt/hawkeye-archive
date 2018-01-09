@@ -4,9 +4,14 @@
 	"table": "autdit_log",
 	"user": "root",
 	"password": "root",
+	"destHost": "127.0.0.1",
+	"destDatabase": "hawkeyeBUP",
+	"destUser":"root",
+	"destPassword":"root",
+	"slave_lag":100,
 	"file": "/var/log/archiver/",
 	"days_archive": 180,
-	"days_purge": 90,
-	"condition_archive": "timestamp < NOW() - INTERVAL  DAY",
+	"days_purge": 100,
+	"condition_archive": "timestamp > NOW() - INTERVAL DAY",
 	"condition_purge": "timestamp < NOW() - INTERVAL  DAY"
 }

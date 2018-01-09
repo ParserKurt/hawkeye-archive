@@ -60,7 +60,7 @@ for t in "${array[@]}"
             #         fi
                      condition_purge="timestamp < NOW() - INTERVAL $days_purge DAY"
                      echo "purging $t"
-                     eval pt-archiver --source h=$host,D=$database,t=$t,p=$password,u=$user --where "'$condition_purge'" --purge --limit 10000 --commit-each --primary-key-only --no-check-charset --header --statistics --why-quit --retries 5 --optimize=sD
+                     eval pt-archiver --source h=$host,D=$database,t=$t,p=$password,u=$user --where "'$condition_purge'" --purge --limit 10000 --commit-each --primary-key-only --no-check-charset --header --statistics --why-quit --retries 5 --progress 1 --optimize=sD
                 done
             echo "done purging"
 
