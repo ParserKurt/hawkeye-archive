@@ -9,12 +9,11 @@ let logger = new (winston.Logger)({
     ]
 });
 let MongoArchiver = require("./lib/mongo_archiver");
-let ha = new MongoArchiver({
+let hawkeye_arvhiver = new MongoArchiver({
     config: config
 });
 logger.info("starting app for mongo archiving and purging");
-ha.start()
-    .then(() => {
+hawkeye_arvhiver.start().then(() => {
     console.log("done");
 }).catch((err) => {
     console.log(err.message);
